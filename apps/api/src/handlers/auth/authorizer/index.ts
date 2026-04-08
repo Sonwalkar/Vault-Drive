@@ -13,7 +13,7 @@ export const handler = async (event: APIGatewayTokenAuthorizerEvent) => {
     }
 
     const { payload } = await jwtVerify(token, JWKS);
-    console.log("JWT Payload:", payload);
+    console.log("JWT Payload:", JSON.stringify(payload));
 
     return generatePolicy("data.user.id", "Allow", event.methodArn);
   } catch (err) {

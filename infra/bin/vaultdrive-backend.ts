@@ -1,12 +1,24 @@
 #!/usr/bin/env node
 import * as cdk from "aws-cdk-lib";
-import { VaultdriveBackendStack } from "../lib/vaultdrive-backend-stack";
+import { APIStack } from "../stacks/api-stack";
 import { config } from "dotenv";
+import { StorageStack } from "../stacks/storage-stack";
 
 config(); // Load environment variables from .env file
 const app = new cdk.App();
-new VaultdriveBackendStack(app, "VaultdriveBackendStack", {
-  env: {
-    region: "ap-south-1",
-  },
+
+const stage = process.env.STAGE || "dev";
+const env = {
+  region: "ap-south-1",
+};
+
+const storageStack = new StorageStack(app, "VaultDriveStorageStack", {
+  env,
+  stage,
+});
+
+new APIStack(app, "VaultDriveAPIStack", {
+  env,
+  bucket: storageStack.bucket,
+  stage,
 });
