@@ -16,4 +16,9 @@ const SUPABASE_TABLES = {
 
 const S3_BUCKET_NAME = `vaultdrive-${process.env?.STAGE}-bucket`;
 
-export { STATUS_CODES, SUPABASE_TABLES, S3_BUCKET_NAME };
+const ALLOWED_ORIGINS = [
+  "http://localhost:3000",
+  // PRODUCTION = "https://vaultdrive.com",
+];
+
+export { STATUS_CODES, SUPABASE_TABLES, S3_BUCKET_NAME, ALLOWED_ORIGINS };

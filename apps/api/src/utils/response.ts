@@ -1,8 +1,8 @@
 import { APIGatewayProxyEvent } from "aws-lambda";
-import { STATUS_CODES } from "../types/constants";
+import { ALLOWED_ORIGINS, STATUS_CODES } from "../types/constants";
 
 const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": process.env.ALLOWED_ORIGIN ?? "http://localhost:3000",
+  "Access-Control-Allow-Origin": ALLOWED_ORIGINS.join(","),
   "Access-Control-Allow-Headers": "Content-Type,Authorization",
   "Access-Control-Allow-Methods": "OPTIONS,POST,GET,PUT,DELETE",
 };
