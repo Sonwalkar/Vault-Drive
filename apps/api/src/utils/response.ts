@@ -28,7 +28,7 @@ const successResponse = (
 const errorResponse = (
   _req: APIGatewayProxyEvent,
   error: any,
-  message: string = "Error",
+  message: string = "Internal Server Error",
 ) => {
   return {
     statusCode: STATUS_CODES.INTERNAL_SERVER_ERROR,

@@ -87,6 +87,24 @@ export class APIStack extends Stack {
       },
     );
 
+    const dashboardFunction = new NodeLambda(
+      this,
+      `DashboardFunction-${props?.stage}`,
+      {
+        functionName: `DashboardFunction-${props?.stage}`,
+        entry: "apps/api/src/handlers/dashboard/index.ts",
+        handler: "handler",
+        environment: {
+          STAGE: props?.stage!,
+          SUPABASE_URL: process.env.SUPABASE_URL!,
+          SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY!,
+        },
+        bundling: {
+          nodeModules: ["tslib"], // Include tslib in the bundle to avoid runtime errors
+        },
+      },
+    );
+
     // ------------------- API Gateway Authorizer ------------------ //
     const authorizer = new TokenAuthorizer(
       this,
@@ -110,5 +128,10 @@ export class APIStack extends Stack {
       .addMethod("POST", new LambdaIntegration(createFolderFunction), {
         authorizer,
       });
+
+    const dashboardRoute = api.root.addResource("dashboard");
+    dashboardRoute.addMethod("GET", new LambdaIntegration(dashboardFunction), {
+      authorizer,
+    });
   }
 }

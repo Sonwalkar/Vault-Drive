@@ -13,6 +13,7 @@ const SUPABASE_TABLES = {
   FILES: "files",
   ACTIVITY_LOG: "activity_log",
   FOLDERS: "folders",
+  FILE_SHARES: "file_shares",
 };
 
 const S3_BUCKET_NAME = `vaultdrive-${process.env?.STAGE}-bucket`;
