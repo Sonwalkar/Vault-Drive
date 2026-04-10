@@ -1,6 +1,7 @@
 import { Stack, StackProps } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { Bucket, HttpMethods } from "aws-cdk-lib/aws-s3";
+import { ALLOWED_ORIGINS } from "../../apps/api/src/types/constants";
 
 interface StorageStackProps extends StackProps {
   stage: string;
@@ -18,7 +19,7 @@ export class StorageStack extends Stack {
               HttpMethods.PUT,
               HttpMethods.POST,
             ],
-            allowedOrigins: ["http://localhost:3000"],
+            allowedOrigins: ALLOWED_ORIGINS,
             allowedHeaders: ["*"],
             exposedHeaders: ["ETag", "Content-Length"],
           },

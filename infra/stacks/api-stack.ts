@@ -1,13 +1,15 @@
 import {
+  AuthorizationType,
   Cors,
   LambdaIntegration,
   RestApi,
   TokenAuthorizer,
 } from "aws-cdk-lib/aws-apigateway";
-import { Stack, StackProps } from "aws-cdk-lib";
+import { Duration, Stack, StackProps } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { Bucket } from "aws-cdk-lib/aws-s3";
 import { NodeLambda } from "../constructs/lambda/node-lambda";
+import { ALLOWED_ORIGINS } from "../../apps/api/src/types/constants";
 
 interface APIStackProps extends StackProps {
   bucket: Bucket;
@@ -18,8 +20,6 @@ export class APIStack extends Stack {
   constructor(scope: Construct, id: string, props?: APIStackProps) {
     super(scope, id, props);
 
-    // ------------------- S3 Bucket ------------------ //
-
     // ------------------- API Gateway ------------------ //
     const api = new RestApi(this, "VaultDriveAPIs", {
       restApiName: `VaultDrive APIs - ${props?.stage}`,
@@ -27,7 +27,7 @@ export class APIStack extends Stack {
         stageName: props?.stage,
       },
       defaultCorsPreflightOptions: {
-        allowOrigins: ["http://localhost:3000"],
+        allowOrigins: ALLOWED_ORIGINS,
         allowMethods: Cors.ALL_METHODS,
         allowHeaders: ["Content-Type", "Authorization"],
       },
@@ -105,23 +105,54 @@ export class APIStack extends Stack {
       },
     );
 
+    const deleteFileFunction = new NodeLambda(
+      this,
+      `DeleteFileFunction-${props?.stage}`,
+      {
+        functionName: `DeleteFileFunction-${props?.stage}`,
+        entry: "apps/api/src/handlers/file/deleteFile/index.ts",
+        handler: "handler",
+        environment: {
+          STAGE: props?.stage!,
+          BUCKET_NAME: props?.bucket.bucketName!,
+          SUPABASE_URL: process.env.SUPABASE_URL!,
+          SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY!,
+        },
+        bundling: {
+          nodeModules: ["tslib"], // Include tslib in the bundle to avoid runtime errors
+        },
+      },
+    );
+    props?.bucket.grantDelete(deleteFileFunction); // Grant delete permissions to the bucket
+
     // ------------------- API Gateway Authorizer ------------------ //
     const authorizer = new TokenAuthorizer(
       this,
       `SupabaseAuthorizer-${props?.stage}`,
       {
         handler: authorizerFunction,
+        resultsCacheTtl: Duration.seconds(0), // Disable caching
       },
     );
 
     // ------------------- API Gateway Routes ------------------ //
+
+    // ------------------- File Routes ------------------ //
     const fileRoute = api.root.addResource("file");
     fileRoute
       .addResource("upload")
       .addMethod("POST", new LambdaIntegration(uploadFileFunction), {
         authorizer,
       });
+    const deleteFileRoute = fileRoute.addResource("delete");
+    // pathParameter
+    deleteFileRoute
+      .addResource("{fileId}")
+      .addMethod("DELETE", new LambdaIntegration(deleteFileFunction), {
+        authorizer,
+      });
 
+    // ------------------- Folder Routes ------------------ //
     const folderRoute = api.root.addResource("folder");
     folderRoute
       .addResource("create")
@@ -129,6 +160,7 @@ export class APIStack extends Stack {
         authorizer,
       });
 
+    // ------------------- Dashboard Route ------------------ //
     const dashboardRoute = api.root.addResource("dashboard");
     dashboardRoute.addMethod("GET", new LambdaIntegration(dashboardFunction), {
       authorizer,

@@ -1,4 +1,8 @@
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import { S3_BUCKET_NAME } from "../types/constants";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
@@ -17,5 +21,14 @@ export default class S3Service {
       ContentType: contentType,
     });
     return await getSignedUrl(this.client, command, { expiresIn: 3600 }); // URL valid for 1 hour
+  }
+
+  async deleteObject(key: string) {
+    const bucketName = S3_BUCKET_NAME;
+    const command = new DeleteObjectCommand({
+      Bucket: bucketName,
+      Key: key,
+    });
+    return await this.client.send(command);
   }
 }
