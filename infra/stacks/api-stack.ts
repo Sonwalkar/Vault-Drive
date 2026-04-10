@@ -125,6 +125,26 @@ export class APIStack extends Stack {
     );
     props?.bucket.grantDelete(deleteFileFunction); // Grant delete permissions to the bucket
 
+    const downloadFileFunction = new NodeLambda(
+      this,
+      `DownloadFileFunction-${props?.stage}`,
+      {
+        functionName: `DownloadFileFunction-${props?.stage}`,
+        entry: "apps/api/src/handlers/file/downloadFile/index.ts",
+        handler: "handler",
+        environment: {
+          STAGE: props?.stage!,
+          BUCKET_NAME: props?.bucket.bucketName!,
+          SUPABASE_URL: process.env.SUPABASE_URL!,
+          SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY!,
+        },
+        bundling: {
+          nodeModules: ["tslib"], // Include tslib in the bundle to avoid runtime errors
+        },
+      },
+    );
+    props?.bucket.grantRead(downloadFileFunction);
+
     // ------------------- API Gateway Authorizer ------------------ //
     const authorizer = new TokenAuthorizer(
       this,
@@ -144,14 +164,20 @@ export class APIStack extends Stack {
       .addMethod("POST", new LambdaIntegration(uploadFileFunction), {
         authorizer,
       });
+
     const deleteFileRoute = fileRoute.addResource("delete");
-    // pathParameter
     deleteFileRoute
       .addResource("{fileId}")
       .addMethod("DELETE", new LambdaIntegration(deleteFileFunction), {
         authorizer,
       });
 
+    const downloadFileRoute = fileRoute.addResource("download");
+    downloadFileRoute
+      .addResource("{fileId}")
+      .addMethod("GET", new LambdaIntegration(downloadFileFunction), {
+        authorizer,
+      });
     // ------------------- Folder Routes ------------------ //
     const folderRoute = api.root.addResource("folder");
     folderRoute
