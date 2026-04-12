@@ -163,6 +163,24 @@ export class APIStack extends Stack {
       },
     );
 
+    const updateFileFunction = new NodeLambda(
+      this,
+      `UpdateFileFunction-${props?.stage}`,
+      {
+        functionName: `UpdateFileFunction-${props?.stage}`,
+        entry: "apps/api/src/handlers/file/updateFile/index.ts",
+        handler: "handler",
+        environment: {
+          STAGE: props?.stage,
+          SUPABASE_URL: process.env.SUPABASE_URL!,
+          SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY!,
+        },
+        bundling: {
+          nodeModules: ["tslib"], // Include tslib in the bundle to avoid runtime errors
+        },
+      },
+    );
+
     // ------------------- API Gateway Authorizer ------------------ //
     const authorizer = new TokenAuthorizer(
       this,
@@ -186,6 +204,12 @@ export class APIStack extends Stack {
     fileRoute
       .addResource("list")
       .addMethod("POST", new LambdaIntegration(listFileFunction), {
+        authorizer,
+      });
+
+    fileRoute
+      .addResource("update")
+      .addMethod("PUT", new LambdaIntegration(updateFileFunction), {
         authorizer,
       });
 

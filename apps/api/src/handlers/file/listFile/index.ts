@@ -148,6 +148,7 @@ export const handler = async (
       "Success",
     );
   } catch (error: unknown) {
+    console.error("ERROR", error);
     return errorResponse(event, error);
   }
 };
