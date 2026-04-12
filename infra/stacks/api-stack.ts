@@ -145,6 +145,24 @@ export class APIStack extends Stack {
     );
     props?.bucket.grantRead(downloadFileFunction);
 
+    const listFileFunction = new NodeLambda(
+      this,
+      `ListFileFunction-${props?.stage}`,
+      {
+        functionName: `ListFileFunction-${props?.stage}`,
+        entry: "apps/api/src/handlers/file/listFile/index.ts",
+        handler: "handler",
+        environment: {
+          STAGE: props?.stage!,
+          SUPABASE_URL: process.env.SUPABASE_URL!,
+          SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY!,
+        },
+        bundling: {
+          nodeModules: ["tslib"], // Include tslib in the bundle to avoid runtime errors
+        },
+      },
+    );
+
     // ------------------- API Gateway Authorizer ------------------ //
     const authorizer = new TokenAuthorizer(
       this,
@@ -165,6 +183,12 @@ export class APIStack extends Stack {
         authorizer,
       });
 
+    fileRoute
+      .addResource("list")
+      .addMethod("POST", new LambdaIntegration(listFileFunction), {
+        authorizer,
+      });
+
     const deleteFileRoute = fileRoute.addResource("delete");
     deleteFileRoute
       .addResource("{fileId}")
@@ -178,6 +202,7 @@ export class APIStack extends Stack {
       .addMethod("GET", new LambdaIntegration(downloadFileFunction), {
         authorizer,
       });
+
     // ------------------- Folder Routes ------------------ //
     const folderRoute = api.root.addResource("folder");
     folderRoute
