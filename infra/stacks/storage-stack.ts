@@ -1,6 +1,6 @@
 import { Stack, StackProps } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { Bucket, HttpMethods } from "aws-cdk-lib/aws-s3";
+import { BlockPublicAccess, Bucket, BucketEncryption, HttpMethods } from "aws-cdk-lib/aws-s3";
 import { ALLOWED_ORIGINS } from "../../apps/api/src/types/constants";
 
 interface StorageStackProps extends StackProps {
@@ -12,6 +12,10 @@ export class StorageStack extends Stack {
     (super(scope, id, props),
       (this.bucket = new Bucket(this, `VaultDriveBucket-${props?.stage}`, {
         bucketName: `vaultdrive-${props?.stage}-bucket`,
+        blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+        encryption: BucketEncryption.S3_MANAGED,
+        enforceSSL: true,
+        versioned: true,
         cors: [
           {
             allowedMethods: [

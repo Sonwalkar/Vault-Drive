@@ -7,12 +7,8 @@ import {
 } from "../../../utils/response";
 import { createClient } from "@supabase/supabase-js";
 import { SUPABASE_TABLES } from "../../../types/constants";
-
-interface CreateFolderRequest {
-  name: string;
-  parentId?: string | null;
-  path: string;
-}
+import { validate } from "../../../utils/validate";
+import { createFolderSchema } from "./schema";
 export const handler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
@@ -36,16 +32,12 @@ export const handler = async (
       return unauthorizedResponse(event, "Unauthorized");
     }
 
-    const { name, parentId, path }: CreateFolderRequest = JSON.parse(
-      event.body!,
-    );
-
-    if (!name || !path) {
-      return badRequestResponse(
-        event,
-        "Missing required fields: name and path",
-      );
+    if (!event.body) {
+      return badRequestResponse(event, "Request body is missing");
     }
+    const parsed = validate(createFolderSchema, JSON.parse(event.body), event);
+    if (!parsed.success) return parsed.response;
+    const { name, parentId, path } = parsed.data;
     const { data, error } = await supabaseClient
       .from(SUPABASE_TABLES.FOLDERS)
       .insert({

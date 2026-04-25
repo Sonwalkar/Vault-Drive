@@ -8,6 +8,8 @@ import {
 import { createClient } from "@supabase/supabase-js";
 import { SUPABASE_TABLES } from "../../../types/constants";
 import S3Service from "../../../services/s3Service";
+import { validate } from "../../../utils/validate";
+import { downloadFileSchema } from "./schema";
 
 export const handler = async (
   event: APIGatewayProxyEvent,
@@ -42,7 +44,9 @@ export const handler = async (
       return unauthorizedResponse(event, "Unauthorized");
     }
 
-    const { fileId } = event.pathParameters as { fileId: string };
+    const pathParsed = validate(downloadFileSchema, event.pathParameters, event);
+    if (!pathParsed.success) return pathParsed.response;
+    const { fileId } = pathParsed.data;
 
     const { data: file, error: fileError } = await supabaseClient
       .from(SUPABASE_TABLES.FILES)

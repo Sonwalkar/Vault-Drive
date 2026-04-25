@@ -7,20 +7,8 @@ import {
 } from "../../../utils/response";
 import { createClient } from "@supabase/supabase-js";
 import { SUPABASE_TABLES } from "../../../types/constants";
-
-interface ListFilesQuery {
-  folderId?: string | null;
-  showAll?: boolean;
-  isTrash?: boolean;
-  search?: string;
-  mimeType?: string;
-  isStarred?: boolean;
-  tag?: string;
-  sortField?: "name" | "size_bytes" | "created_at" | "updated_at";
-  sortOrder?: "asc" | "desc";
-  limit?: number;
-  offset?: number;
-}
+import { validate } from "../../../utils/validate";
+import { listFilesSchema } from "./schema";
 
 export const handler = async (
   event: APIGatewayProxyEvent,
@@ -52,7 +40,8 @@ export const handler = async (
       return badRequestResponse(event, "Request body is missing");
     }
 
-    const body = JSON.parse(event.body) as ListFilesQuery;
+    const parsed = validate(listFilesSchema, JSON.parse(event.body), event);
+    if (!parsed.success) return parsed.response;
     const {
       folderId = null,
       showAll = false,
@@ -65,7 +54,7 @@ export const handler = async (
       sortOrder = "desc",
       limit = 50,
       offset = 0,
-    } = body;
+    } = parsed.data;
 
     // Build files query
     let filesQuery = supabaseClient

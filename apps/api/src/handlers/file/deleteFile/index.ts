@@ -1,15 +1,15 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import {
-  badRequestResponse,
   errorResponse,
   notFoundResponse,
   successResponse,
   unauthorizedResponse,
 } from "../../../utils/response";
 import { createClient } from "@supabase/supabase-js";
-import { Authorization } from "aws-cdk-lib/aws-events";
 import { SUPABASE_TABLES } from "../../../types/constants";
 import S3Service from "../../../services/s3Service";
+import { validate } from "../../../utils/validate";
+import { deleteFileSchema } from "./schema";
 
 export const handler = async (
   event: APIGatewayProxyEvent,
@@ -46,11 +46,9 @@ export const handler = async (
       return unauthorizedResponse(event, "Unauthorized");
     }
 
-    const { fileId } = event.pathParameters as { fileId: string };
-    if (!fileId) {
-      console.error("No fileId provided in path parameters");
-      return badRequestResponse(event, "fileId is required");
-    }
+    const pathParsed = validate(deleteFileSchema, event.pathParameters, event);
+    if (!pathParsed.success) return pathParsed.response;
+    const { fileId } = pathParsed.data;
 
     // verify ownership and get S3 key
     const { data: file, error: fileError } = await supabaseClient

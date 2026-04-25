@@ -7,17 +7,8 @@ import {
 } from "../../../utils/response";
 import { createClient } from "@supabase/supabase-js";
 import { SUPABASE_TABLES } from "../../../types/constants";
-
-interface UpdateFileRequest {
-  fileId: string;
-  updates: {
-    name?: string;
-    folder_id?: string | null;
-    is_starred?: boolean;
-    tags?: string[];
-    metadata?: Record<string, unknown>;
-  };
-}
+import { validate } from "../../../utils/validate";
+import { updateFileSchema } from "./schema";
 
 export const handler = async (
   event: APIGatewayProxyEvent,
@@ -49,11 +40,9 @@ export const handler = async (
     if (!event.body) {
       return badRequestResponse(event, "Request body is missing");
     }
-    const { fileId, updates } = JSON.parse(event.body) as UpdateFileRequest;
-
-    if (!fileId) {
-      return badRequestResponse(event, "Missing fileId");
-    }
+    const parsed = validate(updateFileSchema, JSON.parse(event.body), event);
+    if (!parsed.success) return parsed.response;
+    const { fileId, updates } = parsed.data;
 
     // If metadata is being updated, merge with existing metadata
     const resolveUpdates: Record<string, unknown> = { ...updates };

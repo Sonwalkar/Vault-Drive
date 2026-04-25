@@ -8,13 +8,9 @@ import {
 } from "../../../utils/response";
 import { SUPABASE_TABLES } from "../../../types/constants";
 import S3Service from "../../../services/s3Service";
+import { validate } from "../../../utils/validate";
+import { uploadFileSchema } from "./schema";
 
-interface UploadRequest {
-  fileName: string;
-  contentType: string;
-  folderId?: string | null;
-  sizeBytes: number;
-}
 export const handler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
@@ -63,7 +59,9 @@ export const handler = async (
       .single();
     console.log("User Profiles table Details:", profile);
 
-    const body = JSON.parse(event.body) as UploadRequest;
+    const parsed = validate(uploadFileSchema, JSON.parse(event.body), event);
+    if (!parsed.success) return parsed.response;
+    const body = parsed.data;
 
     if (
       profile &&
