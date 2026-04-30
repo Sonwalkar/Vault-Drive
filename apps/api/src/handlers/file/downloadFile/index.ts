@@ -14,8 +14,9 @@ import { downloadFileSchema } from "./schema";
 export const handler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
+  const { headers: _headers, body: _body, ...safeEvent } = event;
+  console.log("Received event:", JSON.stringify(safeEvent));
   try {
-    console.log("Received event:", JSON.stringify(event, null, 2));
     const authToken =
       event.headers["Authorization"] || event.headers["authorization"];
     if (!authToken) {

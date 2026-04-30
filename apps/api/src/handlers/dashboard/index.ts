@@ -10,9 +10,16 @@ import { SUPABASE_TABLES } from "../../types/constants";
 export const handler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
+  const { headers: _headers, body: _body, ...safeEvent } = event;
+  console.log("Received event:", JSON.stringify(safeEvent));
   try {
     const authToken =
-      event.headers["Authorization"]! || event.headers["authorization"]!;
+      event.headers["Authorization"] || event.headers["authorization"];
+
+    if (!authToken) {
+      return unauthorizedResponse(event, "Unauthorized");
+    }
+
     const supabaseClient = createClient(
       process.env.SUPABASE_URL!,
       process.env.SUPABASE_ANON_KEY!,

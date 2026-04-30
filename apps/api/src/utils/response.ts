@@ -30,6 +30,7 @@ const errorResponse = (
   error: any,
   message: string = "Internal Server Error",
 ) => {
+  console.error("Internal error:", error);
   return {
     statusCode: STATUS_CODES.INTERNAL_SERVER_ERROR,
     headers: {
@@ -38,7 +39,6 @@ const errorResponse = (
     },
     body: JSON.stringify({
       message,
-      error,
     }),
   };
 };

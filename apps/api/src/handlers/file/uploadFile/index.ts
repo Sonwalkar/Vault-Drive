@@ -14,7 +14,8 @@ import { uploadFileSchema } from "./schema";
 export const handler = async (
   event: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
-  console.log("Received event:", JSON.stringify(event, null, 2));
+  const { headers: _headers, body: _body, ...safeEvent } = event;
+  console.log("Received event:", JSON.stringify(safeEvent));
   try {
     if (!event.body) {
       return badRequestResponse(event, "Request body is missing");
@@ -50,14 +51,11 @@ export const handler = async (
       console.error("Authentication error:", authError);
       return unauthorizedResponse(event, "Invalid or expired token");
     }
-    console.log("Authenticated User Details:", user);
-
     const { data: profile } = await supabaseClient
       .from(SUPABASE_TABLES.PROFILES)
       .select("storage_used_bytes, storage_limit_bytes")
       .eq("id", user.id)
       .single();
-    console.log("User Profiles table Details:", profile);
 
     const parsed = validate(uploadFileSchema, JSON.parse(event.body), event);
     if (!parsed.success) return parsed.response;
